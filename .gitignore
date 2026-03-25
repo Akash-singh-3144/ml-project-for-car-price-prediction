@@ -58,3 +58,4 @@ build/
 # -------------------- TEST CACHE --------------------
 
 .pytest_cache/
+models/*.pkl
