@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Model for Car Price Predict</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        :root {
+            --bg-grad-1: #0f172a;
+            --bg-grad-2: #1e1b4b;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+       
+        .bg-shape {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 12s infinite alternate ease-in-out;
+        }
+        .shape-1 {
+            width: 50vw;
+            height: 50vh;
+            background: rgba(139, 92, 246, 0.3);
+            top: -10vh;
+            left: -10vw;
+        }
+        .shape-2 {
+            width: 60vw;
+            height: 60vh;
+            background: rgba(56, 189, 248, 0.2);
+            bottom: -20vh;
+            right: -10vw;
+            animation-delay: -6s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(40px) scale(1.05); }
+        }
+
+       
+        .app-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem 3rem;
+            width: 95vw;
+            max-width: 1400px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+            animation: fadein 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #a855f7, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        /* Grid layout - left and right */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 3rem;
+            row-gap: 1.2rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            margin-left: 4px;
+        }
+
+        /* Smaller input fields */
+        input, select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            appearance: none;
+        }
+
+        select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1rem;
+            padding-right: 2.5rem;
+        }
+
+        select option {
+            background: var(--bg-grad-1);
+            color: white;
+            padding: 8px;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+        }
+
+        input::placeholder {
+            color: rgba(148, 163, 184, 0.4);
+        }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        .submit-container {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            width: 100%;
+            max-width: 350px;
+            padding: 1rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 20px -8px rgba(139, 92, 246, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -10px rgba(139, 92, 246, 0.8);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Predict Another Secondary Button */
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-top: 1.5rem;
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Result Section below the form */
+        .result-wrapper {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .result-card {
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .result-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            box-shadow: 0 10px 30px -10px rgba(34, 197, 94, 0.2);
+        }
+
+        .result-success .label {
+            color: #86efac;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .result-success .price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+            letter-spacing: -0.02em;
+        }
+
+        .result-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            font-size: 1rem;
+        }
+
+        @keyframes slideDown {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                padding: 1.5rem 2rem;
+            }
+            .form-grid {
+                grid-template-columns: 1fr; /* Switch to single column on tiny screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const initialFormState = {
+                model: '',
+                vehicle_age: '',
+                km_driven: '',
+                fuel_type: '',
+                seller_type: '',
+                transmission_type: '',
+                mileage: '',
+                engine: '',
+                max_power: '',
+                seats: ''
+            };
+
+            const savedFormData = sessionStorage.getItem('carFormData');
+            const savedResult = sessionStorage.getItem('carResult');
+
+            const [formData, setFormData] = useState(savedFormData ? JSON.parse(savedFormData) : initialFormState);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(savedResult ? JSON.parse(savedResult) : null);
+
+            React.useEffect(() => {
+                sessionStorage.setItem('carFormData', JSON.stringify(formData));
+            }, [formData]);
+
+            React.useEffect(() => {
+                if (result) {
+                    sessionStorage.setItem('carResult', JSON.stringify(result));
+                } else {
+                    sessionStorage.removeItem('carResult');
+                }
+            }, [result]);
+
+            const handleChange = (e) => {
+                const { id, value } = e.target;
+                setFormData(prev => ({ ...prev, [id]: value }));
+            };
+
+            const handleReset = () => {
+                setFormData(initialFormState);
+                setResult(null);
+                sessionStorage.removeItem('carFormData');
+                sessionStorage.removeItem('carResult');
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                // Form Validation
+                const keys = Object.keys(formData);
+                for (let key of keys) {
+                    if (formData[key] === '') {
+                        setResult({ 
+                            type: 'error', 
+                            data: `Please fill in all fields (missing: ${key.replace('_', ' ')})` 
+                        });
+                        return;
+                    }
+                }
+
+                setLoading(true);
+                setResult(null);
+
+                try {
+                    // Exact payload expected by FastAPI backend
+                    const payload = {
+                        model: parseInt(formData.model),
+                        vehicle_age: parseInt(formData.vehicle_age),
+                        km_driven: parseInt(formData.km_driven),
+                        fuel_type: formData.fuel_type,
+                        seller_type: formData.seller_type,
+                        transmission_type: formData.transmission_type,
+                        mileage: parseFloat(formData.mileage),
+                        engine: parseInt(formData.engine),
+                        max_power: parseFloat(formData.max_power),
+                        seats: parseInt(formData.seats)
+                    };
+
+                    const response = await fetch("http://127.0.0.1:8000/predict", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    // We wrap it in try-catch for unhandled API responses
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        throw new Error("Invalid response from server. Make sure FastAPI is running on port 8000.");
+                    }
+
+                    if (data.success) {
+                        setResult({ type: 'success', data: data.predicted_price });
+                    } else {
+                        setResult({ type: 'error', data: data.error || 'The model could not predict a valid price.' });
+                    }
+                } catch (error) {
+                    setResult({ 
+                        type: 'error', 
+                        data: "Network error. " + (error.message || "Ensure the backend is running.") 
+                    });
+                    console.error(error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const formatPrice = (price) => {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(price);
+            };
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h1>ML Model for Car Price Predict</h1>
+                    </div>
+
+                    {!result || result.type === 'error' ? (
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-grid">
+                                
+                                <div className="input-group">
+                                    <label htmlFor="model">Model ID (Encoded)</label>
+                                    <input type="number" id="model" value={formData.model} onChange={handleChange} placeholder="e.g. 1" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="vehicle_age">Vehicle Age (Years)</label>
+                                    <input type="number" id="vehicle_age" value={formData.vehicle_age} onChange={handleChange} placeholder="e.g. 5" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="km_driven">Kilometers Driven</label>
+                                    <input type="number" id="km_driven" value={formData.km_driven} onChange={handleChange} placeholder="e.g. 45000" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="fuel_type">Fuel Type</label>
+                                    <select id="fuel_type" value={formData.fuel_type} onChange={handleChange}>
+                                        <option value="" disabled>Select Fuel Type...</option>
+                                        <option value="Petrol">Petrol</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="CNG">CNG</option>
+                                        <option value="LPG">LPG</option>
+                                        <option value="Electric">Electric</option>
+                                    </select>
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="seller_type">Seller Type</label>
+                                    <select id="seller_type" value={formData.seller_type} onChange={handleChange}>
+                                        <option value="" disabled>Select Seller Type...</option>
+                                        <option value="Dealer">Dealer</option>
+                                        <option value="Individual">Individual</option>
+                                        <option value="Trustmark Dealer">Trustmark Dealer</option>
+                                    </select>
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="transmission_type">Transmission</label>
+                                    <select id="transmission_type" value={formData.transmission_type} onChange={handleChange}>
+                                        <option value="" disabled>Select Transmission...</option>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automatic">Automatic</option>
+                                    </select>
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="mileage">Mileage (kmpl)</label>
+                                    <input type="number" step="0.1" id="mileage" value={formData.mileage} onChange={handleChange} placeholder="e.g. 18.5" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="engine">Engine (CC)</label>
+                                    <input type="number" id="engine" value={formData.engine} onChange={handleChange} placeholder="e.g. 1197" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="max_power">Max Power (bhp)</label>
+                                    <input type="number" step="0.1" id="max_power" value={formData.max_power} onChange={handleChange} placeholder="e.g. 81.8" />
+                                </div>
+
+                                <div className="input-group">
+                                    <label htmlFor="seats">Seats</label>
+                                    <input type="number" id="seats" value={formData.seats} onChange={handleChange} placeholder="e.g. 5" />
+                                </div>
+
+                            </div>
+
+                            <div className="submit-container">
+                                <button type="submit" disabled={loading}>
+                                    {loading ? (
+                                        <div className="spinner"></div>
+                                    ) : (
+                                        <React.Fragment>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                            Predict True Value
+                                        </React.Fragment>
+                                    )}
+                                </button>
+                            </div>
+
+                            {result && result.type === 'error' && (
+                                <div className="result-wrapper">
+                                    <div className="result-card result-error">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom: '8px'}}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                        <div>{result.data}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
+                    ) : (
+                        <div className="result-wrapper">
+                            <div className="result-card result-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom: '12px'}}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                <div className="label">Estimated Market Value</div>
+                                <div className="price">{formatPrice(result.data)}</div>
+                                
+                                <button className="btn-secondary" onClick={handleReset} type="button">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                    Predict Another
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

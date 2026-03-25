@@ -1,0 +1,60 @@
+# -------------------- PYTHON --------------------
+
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# -------------------- VIRTUAL ENV --------------------
+
+venv/
+env/
+ENV/
+
+# -------------------- ENV FILES --------------------
+
+.env
+.env.*
+
+# -------------------- IDE / EDITOR --------------------
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -------------------- OS FILES --------------------
+
+.DS_Store
+Thumbs.db
+
+# -------------------- JUPYTER --------------------
+
+.ipynb_checkpoints/
+
+# -------------------- MODEL FILES --------------------
+
+# (optional: ignore if too large, otherwise comment this out)
+
+# models/*.pkl
+
+# -------------------- DATA FILES --------------------
+
+# (optional: ignore if large datasets)
+
+# data/*.csv
+
+# -------------------- LOGS --------------------
+
+*.log
+
+# -------------------- BUILD --------------------
+
+dist/
+build/
+*.egg-info/
+
+# -------------------- TEST CACHE --------------------
+
+.pytest_cache/
