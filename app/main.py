@@ -18,6 +18,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# -------------------- LOAD MODEL --------------------
+import urllib.request
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
+
+# 🔗 PUT YOUR GOOGLE DRIVE DIRECT DOWNLOAD LINK HERE
+MODEL_URL = "https://drive.google.com/file/d/1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY/view?usp=sharing"
+
+def download_model():
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    print("Downloading model...")
+    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    print("Model downloaded successfully!")
+
+# Download if not exists
+if not os.path.exists(MODEL_PATH):
+    download_model()
+
+print("MODEL PATH:", MODEL_PATH)
+
+# Load model
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+
+
+
 
 # -------------------- LOAD MODEL --------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
