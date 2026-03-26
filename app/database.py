@@ -3,26 +3,26 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import os
 from dotenv import load_dotenv
 
-# -------------------- LOAD ENV --------------------
+
 load_dotenv()
 
-# -------------------- DATABASE URL --------------------
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# -------------------- ENGINE --------------------
+
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # prevents timeout errors
+    pool_pre_ping=True,   
     pool_recycle=3600
 )
 
-# -------------------- SESSION --------------------
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# -------------------- BASE --------------------
+
 Base = declarative_base()
 
-# -------------------- TABLE --------------------
+
 class Prediction(Base):
     __tablename__ = "predictions"
 
@@ -32,7 +32,7 @@ class Prediction(Base):
     vehicle_age = Column(Integer)
     km_driven = Column(Integer)
 
-    # ⚠️ MySQL needs length for String
+   
     seller_type = Column(String(50))
     fuel_type = Column(String(50))
     transmission_type = Column(String(50))
@@ -44,6 +44,6 @@ class Prediction(Base):
 
     predicted_price = Column(Float)
 
-# -------------------- CREATE TABLE --------------------
+
 def create_tables():
     Base.metadata.create_all(bind=engine)
