@@ -1,16 +1,18 @@
-
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 import pandas as pd
 import os
 import pickle
+import gdown
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import SessionLocal, Prediction, create_tables
 
+# -------------------- APP INIT --------------------
 app = FastAPI()
 
-
+# -------------------- CORS --------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,55 +21,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import urllib.request
-
+# -------------------- PATH SETUP --------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
 
+# ✅ Direct Google Drive download link
+MODEL_URL = "https://drive.google.com/uc?id=1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY"
 
-MODEL_URL = "https://drive.google.com/file/d/1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY/view?usp=sharing"
-
+# -------------------- DOWNLOAD MODEL --------------------
 def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
     print("Downloading model...")
-    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
     print("Model downloaded successfully!")
 
+# -------------------- LOAD MODEL --------------------
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        download_model()
 
-if not os.path.exists(MODEL_PATH):
-    download_model()
+    print("Loading model from:", MODEL_PATH)
 
-print("MODEL PATH:", MODEL_PATH)
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
 
-# Load model
-with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
+    print("Model loaded successfully!")
+    return model
 
+# Load once at startup
+model = load_model()
 
-
-
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "model.pkl")
-
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
-
-print("MODEL PATH:", MODEL_PATH)
-
-with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
-
-
-from app.database import SessionLocal, Prediction, create_tables
-
-
+# -------------------- DATABASE --------------------
 @app.on_event("startup")
 def on_startup():
     print("Creating tables if not exist...")
     create_tables()
-
 
 def get_db():
     db = SessionLocal()
@@ -76,7 +65,7 @@ def get_db():
     finally:
         db.close()
 
-
+# -------------------- INPUT SCHEMA --------------------
 class CarInput(BaseModel):
     model: int
     vehicle_age: int
@@ -89,23 +78,22 @@ class CarInput(BaseModel):
     max_power: float
     seats: int
 
-
+# -------------------- ROUTES --------------------
 @app.get("/")
 def home():
     return {"message": "Car Price Prediction API is running 🚀"}
 
-
 @app.post("/predict")
 def predict(data: CarInput, db: Session = Depends(get_db)):
     try:
-        
-        df = pd.DataFrame([data.model_dump()]) 
+        # Convert input to DataFrame
+        df = pd.DataFrame([data.model_dump()])
         print("INPUT DF:\n", df)
 
-        
+        # Prediction
         prediction = float(model.predict(df)[0])
 
-       
+        # Save to DB
         db_prediction = Prediction(
             model=data.model,
             vehicle_age=data.vehicle_age,
@@ -131,9 +119,8 @@ def predict(data: CarInput, db: Session = Depends(get_db)):
         }
 
     except Exception as e:
-        db.rollback()  
+        db.rollback()
         return {
             "success": False,
             "error": str(e)
         }
-
