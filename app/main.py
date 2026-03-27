@@ -33,7 +33,12 @@ MODEL_URL = "https://drive.google.com/uc?id=1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY"
 def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
     print("Downloading model...")
-    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+    output = gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+    if output is None or not os.path.exists(MODEL_PATH):
+        raise Exception("Model download failed! Check Google Drive permissions.")
+
     print("Model downloaded successfully!")
 
 # -------------------- LOAD MODEL --------------------
@@ -41,12 +46,14 @@ def load_model():
     if not os.path.exists(MODEL_PATH):
         download_model()
 
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError("Model file still missing after download")
+
     print("Loading model from:", MODEL_PATH)
 
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 
-    print("Model loaded successfully!")
     return model
 
 # Load once at startup
