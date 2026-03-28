@@ -27,7 +27,7 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
 
 # ✅ Direct Google Drive download link
-MODEL_URL = "https://drive.google.com/uc?id=1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY"
+MODEL_URL = "https://drive.google.com/file/d/1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY/view?usp=sharing"
 
 # -------------------- DOWNLOAD MODEL --------------------
 def download_model():
