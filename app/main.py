@@ -3,7 +3,6 @@ from pydantic import BaseModel
 import pandas as pd
 import os
 import pickle
-import gdown
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,49 +22,22 @@ app.add_middleware(
 
 # -------------------- PATH SETUP --------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
-
-# ✅ Google Drive file ID
-MODEL_ID = "1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY"
-
-# -------------------- DOWNLOAD MODEL --------------------
-def download_model():
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    print("Downloading model...")
-
-    url = f"https://drive.google.com/uc?id={MODEL_ID}"
-
-    try:
-        gdown.download(
-            url,
-            MODEL_PATH,
-            quiet=False,
-            fuzzy=True  # 🔥 required for large files
-        )
-    except Exception as e:
-        raise Exception(f"Download failed: {str(e)}")
-
-    if not os.path.exists(MODEL_PATH):
-        raise Exception("Model download failed! File not found after download.")
-
-    print("Model downloaded successfully!")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "model.pkl")
 
 # -------------------- LOAD MODEL --------------------
 def load_model():
+    print("Looking for model at:", MODEL_PATH)
+
     if not os.path.exists(MODEL_PATH):
-        download_model()
+        raise FileNotFoundError(
+            f"model.pkl not found at {MODEL_PATH}. Make sure it exists in /models folder."
+        )
 
-    print("Loading model from:", MODEL_PATH)
-
-    # 🔥 Safety check → prevents HTML instead of pickle
+    # Optional safety check
     with open(MODEL_PATH, "rb") as f:
         header = f.read(10)
         if header.startswith(b"<"):
-            raise ValueError(
-                "Downloaded file is HTML, not a valid pickle. "
-                "Fix Google Drive permissions or link."
-            )
+            raise ValueError("model.pkl is corrupted or not a valid pickle file.")
 
     try:
         with open(MODEL_PATH, "rb") as f:
@@ -73,7 +45,7 @@ def load_model():
     except Exception as e:
         raise Exception(f"Error loading model: {str(e)}")
 
-    print("Model loaded successfully!")
+    print("✅ Model loaded successfully!")
     return model
 
 # -------------------- GLOBAL MODEL --------------------
