@@ -26,18 +26,28 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
 
-# ✅ Direct Google Drive download link
-MODEL_URL = "https://drive.google.com/file/d/1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY/view?usp=sharing"
+# ✅ Google Drive file ID
+MODEL_ID = "1dXsyh8dZguRwYGy2shvb0qydVmS0SpQY"
 
 # -------------------- DOWNLOAD MODEL --------------------
 def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
     print("Downloading model...")
 
-    output = gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+    url = f"https://drive.google.com/uc?id={MODEL_ID}"
 
-    if output is None or not os.path.exists(MODEL_PATH):
-        raise Exception("Model download failed! Check Google Drive permissions.")
+    try:
+        gdown.download(
+            url,
+            MODEL_PATH,
+            quiet=False,
+            fuzzy=True  # 🔥 required for large files
+        )
+    except Exception as e:
+        raise Exception(f"Download failed: {str(e)}")
+
+    if not os.path.exists(MODEL_PATH):
+        raise Exception("Model download failed! File not found after download.")
 
     print("Model downloaded successfully!")
 
@@ -46,25 +56,39 @@ def load_model():
     if not os.path.exists(MODEL_PATH):
         download_model()
 
-    if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError("Model file still missing after download")
-
     print("Loading model from:", MODEL_PATH)
 
+    # 🔥 Safety check → prevents HTML instead of pickle
     with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
+        header = f.read(10)
+        if header.startswith(b"<"):
+            raise ValueError(
+                "Downloaded file is HTML, not a valid pickle. "
+                "Fix Google Drive permissions or link."
+            )
 
+    try:
+        with open(MODEL_PATH, "rb") as f:
+            model = pickle.load(f)
+    except Exception as e:
+        raise Exception(f"Error loading model: {str(e)}")
+
+    print("Model loaded successfully!")
     return model
 
-# Load once at startup
-model = load_model()
+# -------------------- GLOBAL MODEL --------------------
+model = None
 
-# -------------------- DATABASE --------------------
+# -------------------- DATABASE + STARTUP --------------------
 @app.on_event("startup")
 def on_startup():
-    print("Creating tables if not exist...")
-    create_tables()
+    global model
+    print("🚀 Starting application...")
 
+    create_tables()
+    model = load_model()
+
+# -------------------- DB SESSION --------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -90,17 +114,24 @@ class CarInput(BaseModel):
 def home():
     return {"message": "Car Price Prediction API is running 🚀"}
 
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "model_loaded": model is not None
+    }
+
 @app.post("/predict")
 def predict(data: CarInput, db: Session = Depends(get_db)):
     try:
-        # Convert input to DataFrame
+        if model is None:
+            raise Exception("Model not loaded")
+
         df = pd.DataFrame([data.model_dump()])
         print("INPUT DF:\n", df)
 
-        # Prediction
         prediction = float(model.predict(df)[0])
 
-        # Save to DB
         db_prediction = Prediction(
             model=data.model,
             vehicle_age=data.vehicle_age,
