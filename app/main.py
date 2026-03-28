@@ -8,10 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import SessionLocal, Prediction, create_tables
 
-# -------------------- APP INIT --------------------
 app = FastAPI()
 
-# -------------------- CORS --------------------
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,11 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------- PATH SETUP --------------------
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "model.pkl")
 
-# -------------------- LOAD MODEL --------------------
 def load_model():
     print("Looking for model at:", MODEL_PATH)
 
@@ -48,10 +46,10 @@ def load_model():
     print("✅ Model loaded successfully!")
     return model
 
-# -------------------- GLOBAL MODEL --------------------
+
 model = None
 
-# -------------------- DATABASE + STARTUP --------------------
+
 @app.on_event("startup")
 def on_startup():
     global model
@@ -60,7 +58,6 @@ def on_startup():
     create_tables()
     model = load_model()
 
-# -------------------- DB SESSION --------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -68,7 +65,7 @@ def get_db():
     finally:
         db.close()
 
-# -------------------- INPUT SCHEMA --------------------
+#input schema
 class CarInput(BaseModel):
     model: int
     vehicle_age: int
@@ -81,7 +78,7 @@ class CarInput(BaseModel):
     max_power: float
     seats: int
 
-# -------------------- ROUTES --------------------
+
 @app.get("/")
 def home():
     return {"message": "Car Price Prediction API is running 🚀"}
